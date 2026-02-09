@@ -1,0 +1,5 @@
+{
+  "name": "notes_app_pwa",
+  "description": "A progressive note-taking app featuring A4-styled pages, media support, and book-like organization.",
+  "requestFramePermissions": []
+}

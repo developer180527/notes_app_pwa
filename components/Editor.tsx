@@ -3,7 +3,7 @@ import { BookData, PageData } from '../types';
 import Page from './Page';
 import { saveBook } from '../services/db';
 import { generateId } from '../utils/helpers';
-import { ChevronLeft, Save } from 'lucide-react';
+import { ChevronLeft, Save, Plus } from 'lucide-react';
 
 interface EditorProps {
   book: BookData;
@@ -62,13 +62,15 @@ const Editor: React.FC<EditorProps> = ({ book: initialBook, onClose }) => {
     const touchEndY = e.changedTouches[0].clientY;
     const diff = touchStartY.current - touchEndY; // Positive if moved up (scrolled down)
     
-    // Logic: If user swipes up heavily at the bottom of the page
-    if (diff > 100) { // Significant swipe
+    // Logic: If user swipes up heavily (> 80px)
+    if (diff > 80) {
         const container = scrollContainerRef.current;
         if (container) {
             const { scrollTop, scrollHeight, clientHeight } = container;
-            // Check if we are near the bottom
-            if (scrollHeight - scrollTop - clientHeight < 100) {
+            // Check if we are at the bottom (within 50px buffer)
+            if (scrollHeight - scrollTop - clientHeight < 50) {
+               // Haptic feedback for confirmation
+               if (navigator.vibrate) navigator.vibrate(50);
                addNewPage();
             }
         }
@@ -122,15 +124,19 @@ const Editor: React.FC<EditorProps> = ({ book: initialBook, onClose }) => {
             />
           ))}
           
-          <div ref={bottomRef} className="h-16 flex flex-col items-center justify-center opacity-40 gap-2">
-             <div className="w-1 h-8 bg-stone-300 rounded-full mb-2"></div>
-             <span className="text-xs font-medium text-stone-500 uppercase tracking-widest">End of Content</span>
+          <div ref={bottomRef} className="h-24 flex flex-col items-center justify-center opacity-40 gap-3 select-none pb-8">
+             <div className="w-1 h-8 bg-stone-300 rounded-full mb-1 animate-pulse"></div>
+             <div className="flex flex-col items-center">
+                <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Swipe Up</span>
+                <span className="text-[10px] text-stone-400">to add new page</span>
+             </div>
           </div>
 
           <button 
              onClick={addNewPage}
-             className="mx-auto bg-white hover:bg-stone-50 text-stone-800 px-8 py-4 rounded-full font-medium transition-all shadow-lg hover:shadow-xl active:scale-95 border border-stone-100 flex items-center gap-2 group"
+             className="mx-auto bg-white hover:bg-stone-50 text-stone-800 px-8 py-4 rounded-full font-medium transition-all shadow-lg hover:shadow-xl active:scale-95 border border-stone-100 flex items-center gap-2 group mb-8 md:mb-0"
           >
+             <Plus size={18} />
              <span>Add New Page</span>
           </button>
         </div>

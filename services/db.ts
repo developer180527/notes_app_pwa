@@ -127,3 +127,39 @@ export const deleteBook = async (id: string): Promise<void> => {
     throw err;
   }
 };
+
+export const importBooks = async (books: BookData[]): Promise<void> => {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      let completed = 0;
+      let errors = 0;
+
+      if (books.length === 0) {
+        resolve();
+        return;
+      }
+
+      books.forEach(book => {
+        const request = store.put(book);
+        request.onsuccess = () => {
+          completed++;
+          if (completed + errors === books.length) {
+            if (errors > 0) console.warn(`${errors} books failed to import`);
+            resolve();
+          }
+        };
+        request.onerror = () => {
+          errors++;
+          if (completed + errors === books.length) resolve();
+        };
+      });
+    });
+  } catch (err) {
+    console.error("Import failed", err);
+    throw err;
+  }
+};

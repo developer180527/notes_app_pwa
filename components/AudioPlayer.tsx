@@ -9,15 +9,42 @@ const AudioPlayer: React.FC = () => {
     author: '',
     coverColor: 'bg-stone-200',
     volume: 1.0,
-    hasContent: false
+    hasContent: false,
+    progress: 0,
+    currentSegment: 0,
+    totalSegments: 0
   });
   const [isFullPlayerOpen, setIsFullPlayerOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragValue, setDragValue] = useState(0);
 
   useEffect(() => {
     return audioService.subscribe((state) => {
-      setPlayerState(state);
+      // Don't overwrite slider if user is currently dragging it
+      if (!isDragging) {
+         setPlayerState(state);
+      } else {
+         // Update background state but keep slider visual constant
+         setPlayerState(prev => ({...state, progress: prev.progress}));
+      }
     });
-  }, []);
+  }, [isDragging]);
+
+  const handleSeekStart = () => {
+      setIsDragging(true);
+      setDragValue(playerState.progress);
+  };
+
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDragValue(parseFloat(e.target.value));
+      setPlayerState(prev => ({ ...prev, progress: parseFloat(e.target.value) }));
+  };
+
+  const handleSeekEnd = (e: React.MouseEvent | React.TouchEvent) => {
+      setIsDragging(false);
+      // Commit seek
+      audioService.seek(dragValue);
+  };
 
   if (!playerState.hasContent) return null;
 
@@ -129,14 +156,24 @@ const AudioPlayer: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Scrub Bar (Fake Progress for TTS) */}
+                    {/* Progress Slider */}
                     <div className="w-full space-y-2 group">
-                        <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden w-full relative">
-                            <div className="h-full bg-stone-400 w-1/3 rounded-full relative"></div>
-                        </div>
+                        <input 
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value={playerState.progress}
+                            onMouseDown={handleSeekStart}
+                            onTouchStart={handleSeekStart}
+                            onChange={handleSeekChange}
+                            onMouseUp={handleSeekEnd}
+                            onTouchEnd={handleSeekEnd}
+                            className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-stone-800 [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:scale-125 transition-all"
+                        />
                         <div className="flex justify-between text-[10px] font-bold text-stone-400 group-hover:text-stone-500 transition-colors">
-                            <span>LIVE</span>
-                            <span>--:--</span>
+                            <span>{playerState.currentSegment}</span>
+                            <span>{playerState.totalSegments}</span>
                         </div>
                     </div>
 

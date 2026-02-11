@@ -7,6 +7,7 @@
   "background_color": "#e5e5e5",
   "theme_color": "#fdfbf7",
   "orientation": "portrait-primary",
+  "categories": ["productivity"],
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/889/889648.png",

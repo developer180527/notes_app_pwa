@@ -623,69 +623,70 @@ const Library: React.FC<LibraryProps> = ({ onOpenBook }) => {
           </div>
         </div>
 
-        {/* --- Mobile Floating Nav --- */}
-        <div className="md:hidden fixed bottom-6 left-6 right-6 z-40 flex items-center justify-between pointer-events-none">
-          
-          {/* Nav Pill (Left side) */}
-          <div className="bg-stone-900/95 backdrop-blur-2xl text-stone-400 rounded-full h-14 px-6 flex items-center gap-6 shadow-2xl pointer-events-auto ring-1 ring-white/10 transform transition-transform">
-             <button 
-                onClick={() => setSettingsModal(true)} 
-                className="hover:text-white transition-colors flex flex-col items-center justify-center active:scale-90 duration-200"
-             >
-                <Settings size={20} strokeWidth={2} />
-             </button>
-             
-             <div className="w-px h-5 bg-white/10"></div>
-             
-             <button 
-               onClick={() => { setSearchQuery(''); setSettingsModal(false); }} 
-               className={`hover:text-white transition-colors flex flex-col items-center justify-center active:scale-90 duration-200 ${searchQuery === '' && !settingsModal ? 'text-white' : ''}`}
-             >
-                <LibraryIcon size={20} strokeWidth={2} />
-             </button>
-             
-             <button 
-               onClick={focusSearch} 
-               className={`hover:text-white transition-colors flex flex-col items-center justify-center active:scale-90 duration-200 ${searchQuery !== '' ? 'text-white' : ''}`}
-             >
-                <Search size={20} strokeWidth={2} />
-             </button>
-          </div>
+        {/* --- Mobile Floating Navigation --- */}
+        <div className="md:hidden fixed bottom-6 left-5 right-5 z-50 flex items-end gap-4 pointer-events-none">
+            
+            {/* Nav Pill */}
+            <div className="flex-1 h-16 bg-[#fdfbf7]/90 backdrop-blur-xl border border-stone-200/50 shadow-[0_8px_30px_rgba(0,0,0,0.12)] rounded-full flex items-center justify-between px-6 pointer-events-auto">
+                 <button 
+                    onClick={() => { setSearchQuery(''); setSettingsModal(false); }}
+                    className={`flex flex-col items-center justify-center h-full w-12 transition-colors active:scale-95 ${searchQuery === '' && !settingsModal ? 'text-stone-900' : 'text-stone-400'}`}
+                 >
+                     <LibraryIcon size={24} strokeWidth={searchQuery === '' && !settingsModal ? 2.5 : 2} />
+                 </button>
 
-          {/* New Button (Right side) */}
-          <div className="relative pointer-events-auto">
-             {/* New Menu Items (Vertical stack above button) */}
-             {isNewMenuOpen && (
-                <div className="absolute bottom-16 right-0 flex flex-col gap-3 items-end animate-in fade-in slide-in-from-bottom-4 duration-300 origin-bottom-right">
-                    <button 
-                        onClick={startCamera}
-                        className="flex items-center gap-3 bg-stone-900 text-white pl-5 pr-2 py-2 rounded-full shadow-2xl hover:bg-black transition-colors ring-1 ring-white/10 group"
-                    >
-                        <span className="text-xs font-bold tracking-wide">SCAN</span>
-                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                            <Camera size={16} />
-                        </div>
-                    </button>
-                    <button 
-                        onClick={createNewBook}
-                        className="flex items-center gap-3 bg-stone-900 text-white pl-5 pr-2 py-2 rounded-full shadow-2xl hover:bg-black transition-colors ring-1 ring-white/10 group"
-                    >
-                         <span className="text-xs font-bold tracking-wide">NOTE</span>
-                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                            <Edit2 size={16} />
-                        </div>
-                    </button>
-                </div>
-             )}
+                 <div className="w-px h-6 bg-stone-200"></div>
 
-             <button 
-               onClick={(e) => { e.stopPropagation(); setIsNewMenuOpen(!isNewMenuOpen); }}
-               className={`w-14 h-14 bg-stone-100 text-stone-900 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ring-1 ring-stone-200 hover:bg-white active:scale-95 ${isNewMenuOpen ? 'rotate-45 bg-stone-200' : ''}`}
-             >
-               <Plus size={26} strokeWidth={2.5} />
-             </button>
-          </div>
+                 <button 
+                    onClick={focusSearch}
+                    className={`flex flex-col items-center justify-center h-full w-12 transition-colors active:scale-95 ${searchQuery !== '' ? 'text-stone-900' : 'text-stone-400'}`}
+                 >
+                     <Search size={24} strokeWidth={searchQuery !== '' ? 2.5 : 2} />
+                 </button>
 
+                 <div className="w-px h-6 bg-stone-200"></div>
+
+                 <button 
+                    onClick={() => setSettingsModal(true)}
+                    className={`flex flex-col items-center justify-center h-full w-12 transition-colors active:scale-95 ${settingsModal ? 'text-stone-900' : 'text-stone-400'}`}
+                 >
+                     <Settings size={24} strokeWidth={settingsModal ? 2.5 : 2} />
+                 </button>
+            </div>
+
+            {/* New Button (FAB) */}
+            <div className="relative pointer-events-auto shrink-0">
+                 {/* Menu items pop up here */}
+                 {isNewMenuOpen && (
+                    <div className="absolute bottom-full mb-4 right-0 flex flex-col items-end gap-3 w-48 animate-in fade-in slide-in-from-bottom-4 duration-200">
+                        <button 
+                            onClick={startCamera}
+                            className="flex items-center gap-3 bg-white text-stone-800 pl-4 pr-1.5 py-1.5 rounded-full shadow-lg border border-stone-100 hover:bg-stone-50"
+                        >
+                            <span className="text-xs font-bold tracking-wide">SCAN</span>
+                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center">
+                                <Camera size={16} />
+                            </div>
+                        </button>
+                        <button 
+                            onClick={createNewBook}
+                            className="flex items-center gap-3 bg-white text-stone-800 pl-4 pr-1.5 py-1.5 rounded-full shadow-lg border border-stone-100 hover:bg-stone-50"
+                        >
+                             <span className="text-xs font-bold tracking-wide">NOTE</span>
+                            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center">
+                                <Edit2 size={16} />
+                            </div>
+                        </button>
+                    </div>
+                 )}
+
+                 <button 
+                   onClick={(e) => { e.stopPropagation(); setIsNewMenuOpen(!isNewMenuOpen); }}
+                   className={`w-16 h-16 bg-[#1c1917] text-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(0,0,0,0.2)] transition-all duration-300 ring-4 ring-[#f2f0e9] active:scale-95 ${isNewMenuOpen ? 'rotate-45' : ''}`}
+                 >
+                   <Plus size={32} strokeWidth={2} />
+                 </button>
+            </div>
         </div>
 
       </main>
@@ -694,7 +695,7 @@ const Library: React.FC<LibraryProps> = ({ onOpenBook }) => {
       
       {/* Settings Modal */}
       {settingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md transition-all" onClick={() => setSettingsModal(false)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md transition-all" onClick={() => setSettingsModal(false)}>
           <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-stone-100 flex justify-between items-center shrink-0">
                <h2 className="text-xl font-serif font-bold text-stone-800">Settings</h2>
@@ -826,7 +827,7 @@ const Library: React.FC<LibraryProps> = ({ onOpenBook }) => {
 
       {/* Rename Modal */}
       {renameModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm" onClick={() => setRenameModal({ ...renameModal, isOpen: false })}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm" onClick={() => setRenameModal({ ...renameModal, isOpen: false })}>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-serif font-bold text-stone-800">Rename</h3>
@@ -853,7 +854,7 @@ const Library: React.FC<LibraryProps> = ({ onOpenBook }) => {
 
       {/* Color Modal */}
       {colorModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm" onClick={() => setColorModal({ ...colorModal, isOpen: false })}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm" onClick={() => setColorModal({ ...colorModal, isOpen: false })}>
            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-serif font-bold text-stone-800">Cover Color</h3>

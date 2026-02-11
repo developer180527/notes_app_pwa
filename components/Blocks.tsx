@@ -34,7 +34,7 @@ export const TextBlock: React.FC<BlockProps> = ({ block, onChange, isFocus }) =>
       value={block.content}
       onChange={(e) => onChange({ ...block, content: e.target.value })}
       placeholder="Start writing..."
-      className="w-full bg-transparent resize-none outline-none text-stone-800 font-body text-xl leading-8 overflow-hidden placeholder-stone-300"
+      className="w-full bg-transparent resize-none outline-none text-stone-800 font-body text-xl leading-8 overflow-hidden placeholder-stone-300 transition-all focus:placeholder-stone-400/50"
       rows={1}
     />
   );
@@ -59,11 +59,11 @@ export const ImageBlock: React.FC<BlockProps> = ({ block, onChange, onDelete }) 
   return (
     <div className="relative group my-8">
       {block.content ? (
-        <div className="relative rounded-sm overflow-hidden shadow-lg transition-transform hover:scale-[1.01]">
-           <img src={block.content} alt="User upload" className="w-full h-auto max-h-[150mm] object-contain bg-stone-50" />
+        <div className="relative rounded-sm overflow-hidden shadow-sm transition-all hover:shadow-lg">
+           <img src={block.content} alt="User upload" className="w-full h-auto max-h-[180mm] object-contain bg-stone-50/50" />
            <button 
              onClick={onDelete}
-             className="absolute top-3 right-3 p-2 bg-black/50 backdrop-blur-sm text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500"
+             className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-md text-stone-600 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white shadow-sm"
            >
              <X size={16} />
            </button>
@@ -71,7 +71,7 @@ export const ImageBlock: React.FC<BlockProps> = ({ block, onChange, onDelete }) 
       ) : (
         <div 
           onClick={() => fileInputRef.current?.click()}
-          className="w-full h-48 border border-stone-200 bg-stone-50/50 rounded-lg flex flex-col items-center justify-center text-stone-400 cursor-pointer hover:bg-stone-100 hover:border-stone-300 transition-all"
+          className="w-full h-48 border-2 border-dashed border-stone-200 bg-stone-50/30 rounded-xl flex flex-col items-center justify-center text-stone-400 cursor-pointer hover:bg-stone-50 hover:border-stone-300 transition-all"
         >
           <div className="p-4 bg-white rounded-full shadow-sm mb-3">
              <ImageIcon size={24} className="text-stone-500" />
@@ -141,17 +141,18 @@ export const TableBlock: React.FC<BlockProps> = ({ block, onChange, onDelete }) 
   };
 
   return (
-    <div className="relative group my-8 overflow-x-auto">
-      <div className="border border-stone-200 rounded-lg overflow-hidden bg-white shadow-sm">
-        <table className="w-full text-sm text-left">
+    <div className="relative group my-8 overflow-x-auto rounded-xl border border-stone-200 shadow-sm bg-white">
+      <div className="overflow-hidden">
+        <table className="w-full text-sm text-left border-collapse">
           <thead className="bg-stone-50 text-stone-700 font-semibold font-sans">
             <tr>
               {data.headers.map((h, i) => (
-                <th key={i} className="p-3 border-b border-r border-stone-200 min-w-[120px] last:border-r-0">
+                <th key={i} className="p-0 min-w-[120px] border-b border-stone-200">
                   <input 
                     value={h} 
                     onChange={(e) => updateHeader(i, e.target.value)}
-                    className="w-full bg-transparent outline-none font-bold"
+                    className="w-full h-full p-3 bg-transparent outline-none font-bold focus:bg-stone-100 transition-colors placeholder-stone-400"
+                    placeholder="Header"
                   />
                 </th>
               ))}
@@ -159,13 +160,14 @@ export const TableBlock: React.FC<BlockProps> = ({ block, onChange, onDelete }) 
           </thead>
           <tbody className="font-sans">
             {data.rows.map((row, rIdx) => (
-              <tr key={row.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50/50 transition-colors">
+              <tr key={row.id} className="group/row">
                 {row.cells.map((cell, cIdx) => (
-                  <td key={cell.id} className="p-3 border-r border-stone-100 min-w-[120px] last:border-r-0">
+                  <td key={cell.id} className="p-0 min-w-[120px] border-b border-stone-100 last:border-0">
                     <input 
                       value={cell.text} 
                       onChange={(e) => updateCell(rIdx, cIdx, e.target.value)}
-                      className="w-full bg-transparent outline-none text-stone-600"
+                      className="w-full h-full p-3 bg-transparent outline-none text-stone-600 focus:bg-blue-50/30 transition-colors"
+                      placeholder="..."
                     />
                   </td>
                 ))}
@@ -173,15 +175,20 @@ export const TableBlock: React.FC<BlockProps> = ({ block, onChange, onDelete }) 
             ))}
           </tbody>
         </table>
-        <div className="flex bg-stone-50 border-t border-stone-200">
-           <button onClick={addRow} className="px-4 py-3 text-xs font-bold text-stone-500 uppercase tracking-wide hover:bg-stone-100 flex-1 transition-colors hover:text-stone-800">Add Row</button>
-           <div className="w-px bg-stone-200"></div>
-           <button onClick={addColumn} className="px-4 py-3 text-xs font-bold text-stone-500 uppercase tracking-wide hover:bg-stone-100 flex-1 transition-colors hover:text-stone-800">Add Column</button>
-        </div>
       </div>
+      
+      <div className="flex bg-stone-50 border-t border-stone-200 divide-x divide-stone-200">
+           <button onClick={addRow} className="px-4 py-2.5 text-xs font-bold text-stone-500 uppercase tracking-wide hover:bg-white flex-1 transition-colors hover:text-stone-800">
+             + Row
+           </button>
+           <button onClick={addColumn} className="px-4 py-2.5 text-xs font-bold text-stone-500 uppercase tracking-wide hover:bg-white flex-1 transition-colors hover:text-stone-800">
+             + Column
+           </button>
+      </div>
+
        <button 
              onClick={onDelete}
-             className="absolute -top-3 -right-3 p-1.5 bg-white text-stone-400 border border-stone-200 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 hover:text-red-500 hover:border-red-200 shadow-sm"
+             className="absolute -top-2.5 -right-2.5 p-1.5 bg-white text-stone-400 border border-stone-200 rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 hover:text-red-500 hover:border-red-200 shadow-md z-10"
            >
              <X size={14} />
        </button>
@@ -211,23 +218,24 @@ export const FileBlock: React.FC<BlockProps> = ({ block, onChange, onDelete }) =
         <a 
           href={block.content} 
           download={block.meta?.name || 'download'}
-          className="flex items-center gap-5 p-5 rounded-xl border border-stone-200 bg-stone-50/30 hover:bg-white hover:shadow-md transition-all group/file"
+          className="flex items-center gap-5 p-4 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 hover:shadow-md transition-all group/file relative overflow-hidden"
         >
-          <div className="p-3.5 bg-stone-100 rounded-xl text-stone-600 group-hover/file:bg-stone-900 group-hover/file:text-white transition-colors">
-            <FileText size={24} />
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-stone-800"></div>
+          <div className="p-3 bg-stone-100 rounded-lg text-stone-600 group-hover/file:bg-stone-200 transition-colors">
+            <FileText size={20} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-stone-800 truncate font-sans">{block.meta?.name || 'Attached File'}</p>
-            <p className="text-xs text-stone-400 mt-1">{block.meta?.size || ''}</p>
+            <p className="font-semibold text-stone-800 truncate font-sans text-sm">{block.meta?.name || 'Attached File'}</p>
+            <p className="text-xs text-stone-500 mt-0.5">{block.meta?.size || ''}</p>
           </div>
-          <div className="p-2 rounded-full hover:bg-stone-100 text-stone-400 transition-colors">
-             <Download size={20} />
+          <div className="p-2 rounded-full hover:bg-stone-200 text-stone-400 transition-colors">
+             <Download size={18} />
           </div>
         </a>
       ) : (
         <div 
           onClick={() => fileInputRef.current?.click()}
-          className="w-full py-8 border border-stone-200 bg-stone-50/50 rounded-xl flex items-center justify-center gap-3 text-stone-400 cursor-pointer hover:bg-stone-100 hover:border-stone-300 transition-all"
+          className="w-full py-6 border-2 border-dashed border-stone-200 bg-stone-50/30 rounded-xl flex items-center justify-center gap-3 text-stone-400 cursor-pointer hover:bg-stone-50 hover:border-stone-300 transition-all"
         >
           <FileText size={20} />
           <span className="text-sm font-medium">Attach a file</span>

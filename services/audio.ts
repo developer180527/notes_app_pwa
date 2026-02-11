@@ -3,6 +3,17 @@ import { BookData } from '../types';
 // Silent WAV (universally supported)
 const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
+type AudioState = {
+  isPlaying: boolean;
+  title: string;
+  author: string;
+  coverColor: string;
+  volume: number;
+  hasContent: boolean;
+};
+
+type Listener = (state: AudioState) => void;
+
 class AudioService {
   private synth: SpeechSynthesis;
   private audio: HTMLAudioElement;
@@ -11,6 +22,17 @@ class AudioService {
   private queue: string[] = [];
   private currentTextIndex: number = 0;
   private playPromise: Promise<void> | undefined;
+  
+  // State for UI
+  private listeners: Set<Listener> = new Set();
+  private state: AudioState = {
+    isPlaying: false,
+    title: '',
+    author: '',
+    coverColor: 'bg-stone-200',
+    volume: 1.0,
+    hasContent: false
+  };
 
   constructor() {
     this.synth = window.speechSynthesis;
@@ -20,6 +42,26 @@ class AudioService {
     
     // Handle interruptions
     window.addEventListener('beforeunload', () => this.stop());
+  }
+
+  public subscribe(listener: Listener): () => void {
+    this.listeners.add(listener);
+    listener(this.state); // Initial state
+    return () => this.listeners.delete(listener);
+  }
+
+  private notify() {
+    this.listeners.forEach(listener => listener({ ...this.state }));
+  }
+
+  public setVolume(val: number) {
+    this.state.volume = Math.max(0, Math.min(1, val));
+    this.audio.volume = this.state.volume;
+    // Note: SpeechSynthesis volume is 0-1
+    if (this.currentUtterance) {
+        this.currentUtterance.volume = this.state.volume;
+    }
+    this.notify();
   }
 
   // Generate a dynamic cover image from color for the lock screen
@@ -73,7 +115,6 @@ class AudioService {
     return canvas.toDataURL('image/png');
   }
 
-  // REMOVED async to keep execution in the user-gesture stack for SpeechSynthesis
   public play(text: string, title: string, author: string = 'Folio', coverColor: string = 'bg-[#E8DCC4]') {
     // 1. Reset state (cancel previous speech immediately)
     this.stop(); 
@@ -81,6 +122,17 @@ class AudioService {
     if (!text.trim()) return;
 
     this.isPlaying = true;
+    
+    // Update State
+    this.state = {
+        ...this.state,
+        isPlaying: true,
+        title,
+        author,
+        coverColor,
+        hasContent: true
+    };
+    this.notify();
     
     // 2. Advanced Chunking
     const sentences = text.match(/[^.?!]+[.?!]+[\])'"]*|.+/g) || [text];
@@ -149,6 +201,7 @@ class AudioService {
 
     const textChunk = this.queue[this.currentTextIndex];
     const utterance = new SpeechSynthesisUtterance(textChunk);
+    utterance.volume = this.state.volume;
     
     this.currentUtterance = utterance;
 
@@ -181,6 +234,9 @@ class AudioService {
 
   public pause() {
     this.isPlaying = false;
+    this.state.isPlaying = false;
+    this.notify();
+    
     this.synth.pause();
     this.audio.pause();
   }
@@ -188,11 +244,17 @@ class AudioService {
   public resume() {
     if (this.synth.paused && this.isPlaying === false) {
         this.isPlaying = true;
+        this.state.isPlaying = true;
+        this.notify();
+
         const p = this.audio.play();
         if (p) p.catch(() => {});
         this.synth.resume();
     } else if (!this.isPlaying && this.queue.length > 0) {
         this.isPlaying = true;
+        this.state.isPlaying = true;
+        this.notify();
+
         const p = this.audio.play();
         if (p) p.catch(() => {});
         this.speakNextChunk();
@@ -201,6 +263,10 @@ class AudioService {
 
   public stop() {
     this.isPlaying = false;
+    this.state.isPlaying = false;
+    this.state.hasContent = false;
+    this.notify();
+
     this.synth.cancel();
     
     // Only pause if not already paused to avoid promise race conditions
@@ -217,14 +283,14 @@ class AudioService {
     }
   }
 
-  private nextChunk() {
+  public nextChunk() {
      this.synth.cancel();
      this.currentTextIndex++;
      if (this.currentTextIndex >= this.queue.length) this.currentTextIndex = 0; 
      this.speakNextChunk();
   }
 
-  private prevChunk() {
+  public prevChunk() {
      this.synth.cancel();
      this.currentTextIndex = Math.max(0, this.currentTextIndex - 1);
      this.speakNextChunk();

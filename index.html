@@ -110,16 +110,20 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // Remove explicit scope to allow default behavior, which is often more robust
-          navigator.serviceWorker.register('./service-worker.js')
+          navigator.serviceWorker.register('./service-worker.js', { scope: './' })
             .then((registration) => {
               console.log('ServiceWorker registration successful');
             })
             .catch((err) => {
-              // These errors are common in development/preview environments (e.g. iframes, different origins).
-              // We log them as info so they don't look like critical application failures.
-              if (err.message && (err.message.includes('Script origin') || err.message.includes('URL'))) {
-                 console.log('Info: ServiceWorker not registered (likely due to preview environment restrictions). This will work in production.');
+              // Gracefully handle preview environment restrictions (Script Origin / URL issues)
+              const isPreviewError = err.message && (
+                err.message.includes('Script origin') || 
+                err.message.includes('URL') || 
+                err.message.includes('failed to register')
+              );
+
+              if (isPreviewError) {
+                 console.log('Info: ServiceWorker features (offline mode) are disabled in this environment. The app will function normally.');
               } else {
                  console.error('ServiceWorker registration failed: ', err);
               }

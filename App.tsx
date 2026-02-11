@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Library from './components/Library';
 import Editor from './components/Editor';
+import AudioPlayer from './components/AudioPlayer';
 import { BookData } from './types';
 
 const App: React.FC = () => {
@@ -16,6 +17,9 @@ const App: React.FC = () => {
       ) : (
         <Library onOpenBook={setCurrentBook} />
       )}
+      
+      {/* Global Audio Player persists across views */}
+      <AudioPlayer />
     </div>
   );
 };

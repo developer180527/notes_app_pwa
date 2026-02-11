@@ -2,11 +2,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import { BookData, BlockData } from '../types';
 import { getBooks, saveBook, deleteBook, importBooks } from '../services/db';
 import { initGapiClient, initTokenClient, requestAccessToken, signOut, backupToDrive, restoreFromDrive, getUserProfile, checkForBackup } from '../services/drive';
+import { audioService, extractTextFromBook } from '../services/audio';
 import { generateId, formatDate } from '../utils/helpers';
 import { 
   Plus, BookOpen, Trash2, Library as LibraryIcon, MoreVertical, 
   Edit2, Palette, Check, X, Search, Settings, ChevronLeft, ChevronRight, Menu, 
-  Info, Monitor, Moon, Book, Camera, FileText, Repeat, Cloud, UploadCloud, DownloadCloud, LogOut, Loader, User, RefreshCw, StickyNote
+  Info, Monitor, Moon, Book, Camera, FileText, Repeat, Cloud, UploadCloud, DownloadCloud, LogOut, Loader, User, RefreshCw, StickyNote, Play
 } from 'lucide-react';
 
 interface LibraryProps {
@@ -232,6 +233,18 @@ const Library: React.FC<LibraryProps> = ({ onOpenBook }) => {
     await saveBook(newBook);
     loadBooks();
     onOpenBook(newBook);
+  };
+
+  // --- Audio Logic ---
+  const handlePlayBook = (e: React.MouseEvent, book: BookData) => {
+    e.stopPropagation();
+    setMenuOpenId(null);
+    const text = extractTextFromBook(book);
+    if (text) {
+        audioService.play(text, book.title, 'Folio', book.coverColor);
+    } else {
+        alert("This notebook has no text content to read.");
+    }
   };
 
   // --- Camera & Scanning Logic ---
@@ -574,6 +587,8 @@ const Library: React.FC<LibraryProps> = ({ onOpenBook }) => {
                     {/* Dropdown Menu */}
                     {menuOpenId === book.id && (
                       <div className="absolute top-10 right-2 w-36 bg-white/95 backdrop-blur-md rounded-xl shadow-xl ring-1 ring-black/5 z-30 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                        <button onClick={(e) => handlePlayBook(e, book)} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-stone-600 hover:bg-stone-50 hover:text-stone-900 text-left transition-colors"><Play size={13} /> Listen</button>
+                        <div className="h-px bg-stone-100 my-1"></div>
                         <button onClick={(e) => openRenameModal(e, book)} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-stone-600 hover:bg-stone-50 hover:text-stone-900 text-left transition-colors"><Edit2 size={13} /> Rename</button>
                         <button onClick={(e) => openColorModal(e, book)} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-stone-600 hover:bg-stone-50 hover:text-stone-900 text-left transition-colors"><Palette size={13} /> Color</button>
                         <div className="h-px bg-stone-100 my-1"></div>
@@ -609,205 +624,71 @@ const Library: React.FC<LibraryProps> = ({ onOpenBook }) => {
         </div>
 
         {/* --- Mobile Floating Nav --- */}
-        <div className="md:hidden fixed bottom-8 left-0 right-0 z-40 flex items-center justify-center gap-4 pointer-events-none">
+        <div className="md:hidden fixed bottom-6 left-6 right-6 z-40 flex items-center justify-between pointer-events-none">
           
-          {/* Nav Pill */}
-          <div className="bg-[#1c1917]/90 backdrop-blur-xl text-stone-400 rounded-full h-16 px-8 flex items-center gap-8 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] pointer-events-auto ring-1 ring-white/10">
+          {/* Nav Pill (Left side) */}
+          <div className="bg-stone-900/95 backdrop-blur-2xl text-stone-400 rounded-full h-14 px-6 flex items-center gap-6 shadow-2xl pointer-events-auto ring-1 ring-white/10 transform transition-transform">
              <button 
                 onClick={() => setSettingsModal(true)} 
-                className="hover:text-white transition-colors flex flex-col items-center gap-1 active:scale-90 duration-200"
+                className="hover:text-white transition-colors flex flex-col items-center justify-center active:scale-90 duration-200"
              >
-                <Settings size={22} />
+                <Settings size={20} strokeWidth={2} />
              </button>
              
-             <div className="w-px h-6 bg-white/10"></div>
+             <div className="w-px h-5 bg-white/10"></div>
              
              <button 
                onClick={() => { setSearchQuery(''); setSettingsModal(false); }} 
-               className={`hover:text-white transition-colors flex flex-col items-center gap-1 active:scale-90 duration-200 ${searchQuery === '' && !settingsModal ? 'text-white' : ''}`}
+               className={`hover:text-white transition-colors flex flex-col items-center justify-center active:scale-90 duration-200 ${searchQuery === '' && !settingsModal ? 'text-white' : ''}`}
              >
-                <LibraryIcon size={22} />
+                <LibraryIcon size={20} strokeWidth={2} />
              </button>
              
-             <div className="w-px h-6 bg-white/10"></div>
-
              <button 
                onClick={focusSearch} 
-               className={`hover:text-white transition-colors flex flex-col items-center gap-1 active:scale-90 duration-200 ${searchQuery !== '' ? 'text-white' : ''}`}
+               className={`hover:text-white transition-colors flex flex-col items-center justify-center active:scale-90 duration-200 ${searchQuery !== '' ? 'text-white' : ''}`}
              >
-                <Search size={22} />
+                <Search size={20} strokeWidth={2} />
              </button>
           </div>
 
-          {/* New Button Wrapper */}
-          <div className="relative flex flex-col items-center gap-2 pointer-events-auto">
-             
-             {/* New Menu Items */}
+          {/* New Button (Right side) */}
+          <div className="relative pointer-events-auto">
+             {/* New Menu Items (Vertical stack above button) */}
              {isNewMenuOpen && (
-                <div className="absolute bottom-20 flex flex-col gap-3 items-center animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="absolute bottom-16 right-0 flex flex-col gap-3 items-end animate-in fade-in slide-in-from-bottom-4 duration-300 origin-bottom-right">
                     <button 
                         onClick={startCamera}
-                        className="flex items-center gap-2 bg-stone-900 text-white px-4 py-2 rounded-full shadow-xl hover:bg-stone-800 transition-colors whitespace-nowrap"
+                        className="flex items-center gap-3 bg-stone-900 text-white pl-5 pr-2 py-2 rounded-full shadow-2xl hover:bg-black transition-colors ring-1 ring-white/10 group"
                     >
-                        <Camera size={18} />
-                        <span className="text-sm font-medium">Scan</span>
+                        <span className="text-xs font-bold tracking-wide">SCAN</span>
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                            <Camera size={16} />
+                        </div>
                     </button>
                     <button 
                         onClick={createNewBook}
-                        className="flex items-center gap-2 bg-stone-900 text-white px-4 py-2 rounded-full shadow-xl hover:bg-stone-800 transition-colors whitespace-nowrap"
+                        className="flex items-center gap-3 bg-stone-900 text-white pl-5 pr-2 py-2 rounded-full shadow-2xl hover:bg-black transition-colors ring-1 ring-white/10 group"
                     >
-                        <Edit2 size={18} />
-                        <span className="text-sm font-medium">Note</span>
+                         <span className="text-xs font-bold tracking-wide">NOTE</span>
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                            <Edit2 size={16} />
+                        </div>
                     </button>
                 </div>
              )}
 
              <button 
                onClick={(e) => { e.stopPropagation(); setIsNewMenuOpen(!isNewMenuOpen); }}
-               className={`w-14 h-14 bg-stone-100 text-stone-900 rounded-full flex items-center justify-center shadow-[0_10px_20px_-5px_rgba(0,0,0,0.2)] transition-all duration-300 ring-1 ring-stone-200 hover:bg-white z-50 ${isNewMenuOpen ? 'rotate-45 bg-stone-200' : ''}`}
+               className={`w-14 h-14 bg-stone-100 text-stone-900 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ring-1 ring-stone-200 hover:bg-white active:scale-95 ${isNewMenuOpen ? 'rotate-45 bg-stone-200' : ''}`}
              >
                <Plus size={26} strokeWidth={2.5} />
              </button>
-             <span className={`text-[10px] font-bold text-stone-500 uppercase tracking-widest bg-white/80 backdrop-blur px-3 py-1 rounded-full shadow-sm transition-opacity ${isNewMenuOpen ? 'opacity-0' : 'opacity-100'}`}>New</span>
           </div>
 
         </div>
 
       </main>
-
-      {/* --- Modals --- */}
-      
-      {/* Settings Modal */}
-      {settingsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md transition-all" onClick={() => setSettingsModal(false)}>
-          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-stone-100 flex justify-between items-center shrink-0">
-               <h2 className="text-xl font-serif font-bold text-stone-800">Settings</h2>
-               <button onClick={() => setSettingsModal(false)} className="p-2 bg-stone-50 rounded-full text-stone-400 hover:bg-stone-100 transition-colors">
-                 <X size={18} />
-               </button>
-            </div>
-            
-            <div className="p-6 space-y-4 overflow-y-auto">
-               
-               {/* Appearance */}
-               <div className="flex items-center justify-between p-4 bg-stone-50 rounded-2xl hover:bg-stone-100 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-4 text-stone-700">
-                     <Moon size={20} />
-                     <span className="font-medium">Dark Mode</span>
-                  </div>
-                  <div className="w-11 h-6 bg-stone-300 rounded-full relative transition-colors">
-                     <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 shadow-sm transition-transform"></div>
-                  </div>
-               </div>
-
-               {/* Drive Sync Section */}
-               <div className="bg-stone-50 rounded-2xl p-4 space-y-4 border border-stone-100">
-                  <div className="flex items-center gap-4 text-stone-800">
-                     <Cloud size={20} className="text-blue-500" />
-                     <span className="font-medium">Cloud Sync</span>
-                  </div>
-
-                  {!isDriveAuthed ? (
-                    <div className="space-y-3">
-                        {showClientIdInput ? (
-                            <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
-                                 <p className="text-xs text-stone-500">To enable Google Sign-In, enter your Client ID.</p>
-                                 <input 
-                                    className="w-full text-xs p-2 rounded-lg border border-stone-200 bg-white outline-none focus:border-blue-400"
-                                    value={driveClientId} 
-                                    onChange={(e) => setDriveClientId(e.target.value)} 
-                                    placeholder="apps.googleusercontent.com ID"
-                                 />
-                                 <div className="flex gap-2">
-                                    <button onClick={() => setShowClientIdInput(false)} className="flex-1 py-2 text-xs font-bold text-stone-500 hover:bg-stone-200 rounded-lg transition-colors">Cancel</button>
-                                    <button onClick={handleSaveClientId} className="flex-1 py-2 bg-stone-800 text-white text-xs font-bold rounded-lg hover:bg-black transition-colors">Save</button>
-                                 </div>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-2">
-                                <p className="text-xs text-stone-500">Sign in to backup and restore your notebooks across devices.</p>
-                                <button 
-                                    onClick={handleGoogleSignIn}
-                                    className="w-full bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 hover:border-stone-300 font-medium rounded-xl px-4 py-2.5 flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95"
-                                >
-                                     <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-                                        <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
-                                            <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z" />
-                                            <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z" />
-                                            <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z" />
-                                            <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z" />
-                                        </g>
-                                     </svg>
-                                     Sign in with Google
-                                </button>
-                                <button onClick={() => setShowClientIdInput(true)} className="text-[10px] text-stone-400 hover:text-stone-600 underline">
-                                    Configure Client ID
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                  ) : (
-                    <div className="space-y-4 animate-in fade-in">
-                         <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-stone-200 shadow-sm">
-                             <div className="flex items-center gap-3">
-                                 {userProfile?.picture ? (
-                                    <img src={userProfile.picture} alt="Profile" className="w-8 h-8 rounded-full" />
-                                 ) : (
-                                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs">
-                                         {userProfile?.name?.charAt(0) || <User size={14}/>}
-                                    </div>
-                                 )}
-                                 <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-stone-700">{userProfile?.name || 'Google User'}</span>
-                                    <span className="text-[10px] text-stone-400">Connected</span>
-                                 </div>
-                             </div>
-                             <button onClick={handleSignOut} className="p-2 hover:bg-stone-50 rounded-full text-stone-400 hover:text-red-500 transition-colors">
-                                <LogOut size={16} />
-                             </button>
-                         </div>
-                         
-                         <div className="grid grid-cols-2 gap-2">
-                             <button 
-                                onClick={handleBackup} 
-                                disabled={isSyncing}
-                                className="flex flex-col items-center gap-2 p-3 bg-white border border-stone-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-all active:scale-95"
-                             >
-                                {isSyncing ? <Loader size={20} className="animate-spin text-blue-500" /> : <UploadCloud size={20} className="text-stone-600" />}
-                                <span className="text-xs font-bold text-stone-600">Backup</span>
-                             </button>
-                             <button 
-                                onClick={handleRestore}
-                                disabled={isSyncing}
-                                className={`flex flex-col items-center gap-2 p-3 bg-white border border-stone-200 rounded-xl transition-all active:scale-95 ${backupExists ? 'ring-2 ring-emerald-400 ring-offset-2 hover:bg-emerald-50' : 'hover:bg-emerald-50 hover:border-emerald-200'}`}
-                             >
-                                {isSyncing ? <Loader size={20} className="animate-spin text-emerald-500" /> : <DownloadCloud size={20} className={backupExists ? "text-emerald-500" : "text-stone-600"} />}
-                                <span className="text-xs font-bold text-stone-600">Restore</span>
-                             </button>
-                        </div>
-                    </div>
-                  )}
-                  {syncMessage && (
-                    <p className="text-xs text-center font-medium text-stone-500 animate-pulse">{syncMessage}</p>
-                  )}
-               </div>
-
-               <div className="flex items-center justify-between p-4 bg-stone-50 rounded-2xl">
-                  <div className="flex items-center gap-4 text-stone-700">
-                     <Info size={20} />
-                     <span className="font-medium">About Folio</span>
-                  </div>
-                  <span className="text-xs text-stone-400 font-mono bg-stone-200 px-2 py-1 rounded-md">v1.4.0</span>
-               </div>
-            </div>
-            
-            <div className="p-6 bg-stone-50 text-center text-xs text-stone-400 font-medium shrink-0">
-               <p>Designed for writers & thinkers.</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* --- Modals --- */}
       

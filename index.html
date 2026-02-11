@@ -110,12 +110,19 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+          // Remove explicit scope to allow default behavior, which is often more robust
           navigator.serviceWorker.register('./service-worker.js')
             .then((registration) => {
-              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+              console.log('ServiceWorker registration successful');
             })
             .catch((err) => {
-              console.log('ServiceWorker registration failed: ', err);
+              // These errors are common in development/preview environments (e.g. iframes, different origins).
+              // We log them as info so they don't look like critical application failures.
+              if (err.message && (err.message.includes('Script origin') || err.message.includes('URL'))) {
+                 console.log('Info: ServiceWorker not registered (likely due to preview environment restrictions). This will work in production.');
+              } else {
+                 console.error('ServiceWorker registration failed: ', err);
+              }
             });
         });
       }

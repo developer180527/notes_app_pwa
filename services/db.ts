@@ -12,13 +12,11 @@ const requestPersistence = async () => {
     try {
       const isPersisted = await navigator.storage.persisted();
       if (!isPersisted) {
-        const granted = await navigator.storage.persist();
-        console.log(`Storage persistence request: ${granted ? 'granted' : 'denied'}`);
-      } else {
-        console.log('Storage is already persistent');
+        await navigator.storage.persist();
+        // Log removed to reduce noise
       }
     } catch (err) {
-      console.warn('Could not request persistence:', err);
+      // Warn suppressed
     }
   }
 };

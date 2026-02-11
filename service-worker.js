@@ -8,13 +8,22 @@ const ASSETS_TO_CACHE = [
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
 ];
 
-// Install event: Cache core assets immediately
+// Install event: Cache core assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // We use addAll to pre-cache critical files.
-      // Note: If any of these fail, the service worker install fails.
-      return cache.addAll(ASSETS_TO_CACHE);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Attempt to cache all, but don't fail the entire install if one non-critical file (like index.tsx source) is missing
+      // due to build environment differences.
+      const results = await Promise.allSettled(
+        ASSETS_TO_CACHE.map(url => cache.add(url))
+      );
+      
+      // Log failures for debugging but allow installation to proceed
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.debug(`Failed to cache ${ASSETS_TO_CACHE[index]}:`, result.reason);
+        }
+      });
     })
   );
   self.skipWaiting(); // Activate worker immediately
@@ -45,11 +54,9 @@ self.addEventListener('fetch', (event) => {
 
   if (isNavigation) {
     // Strategy: Network First, fallback to Cache for HTML/Navigation
-    // This ensures users get the latest version if online, but app works if offline.
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Update cache with new version
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone);
@@ -57,26 +64,20 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // If network fails, return cached index.html or the specific page
           return caches.match(event.request).then((response) => {
              return response || caches.match('./index.html');
           });
         })
     );
   } else {
-    // Strategy: Cache First, fallback to Network (Stale-While-Revalidate pattern)
-    // Good for JS, CSS, Images, Fonts
+    // Strategy: Cache First, fallback to Network
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
-        // If in cache, return it
         if (cachedResponse) {
           return cachedResponse;
         }
 
-        // If not in cache, fetch from network
         return fetch(event.request).then((response) => {
-          // Valid response?
-          // We allow opaque responses (status 0) for CDNs/no-cors
           if (!response || (response.status !== 200 && response.status !== 0)) {
             return response;
           }
@@ -87,6 +88,8 @@ self.addEventListener('fetch', (event) => {
           });
 
           return response;
+        }).catch(() => {
+           // Network failure for static asset, nothing to return.
         });
       })
     );
